@@ -1,0 +1,15 @@
+[Unit]
+Description=Moka Finance Tracker
+After=network.target
+
+[Service]
+Type=simple
+User=%u
+WorkingDirectory=%h/.moka
+ExecStart=%h/.local/bin/moka
+Restart=always
+RestartSec=5
+Environment="MOKA_DATA_DIR=%h/.moka"
+
+[Install]
+WantedBy=multi-user.target
