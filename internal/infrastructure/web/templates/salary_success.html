@@ -1,0 +1,7 @@
+<div class="alert alert-success">
+    ✓ Salary added: {{.Output.SalaryTransaction.Amount.Amount | printf "%.2f"}} MAD
+    <br>
+    Fixed charges deducted: {{.Output.FixedChargesTotal.Amount | printf "%.2f"}} MAD
+    <br>
+    <strong>Net amount: {{.Output.NetAmount.Amount | printf "%.2f"}} MAD</strong>
+</div>

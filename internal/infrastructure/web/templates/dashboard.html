@@ -1,0 +1,141 @@
+{{define "content"}}
+<div class="dashboard">
+    <div class="month-selector">
+        <h2>{{.Summary.Month}} {{.Summary.Year}}</h2>
+        <div class="month-nav">
+            <a href="/?year={{.PrevYear}}&month={{.PrevMonth}}" class="btn btn-small">← Previous</a>
+            <a href="/" class="btn btn-small">Current</a>
+            <a href="/?year={{.NextYear}}&month={{.NextMonth}}" class="btn btn-small">Next →</a>
+        </div>
+    </div>
+
+    <div class="summary-cards">
+        <div class="card card-income">
+            <h3>Total Income</h3>
+            <p class="amount">{{.Summary.TotalIncome.Amount | printf "%.2f"}} MAD</p>
+        </div>
+
+        <div class="card card-expense">
+            <h3>Total Expenses</h3>
+            <p class="amount">{{.Summary.TotalExpenses.Amount | printf "%.2f"}} MAD</p>
+        </div>
+
+        <div class="card card-savings {{if .Summary.NetSavings.IsPositive}}card-positive{{else}}card-negative{{end}}">
+            <h3>Net Savings</h3>
+            <p class="amount">{{.Summary.NetSavings.Amount | printf "%.2f"}} MAD</p>
+        </div>
+
+        <div class="card card-balance">
+            <h3>Current Balance</h3>
+            <p class="amount">{{.Summary.Balance.Amount | printf "%.2f"}} MAD</p>
+        </div>
+
+        {{if not .Summary.TotalLoansOwed.IsZero}}
+        <div class="card card-loans">
+            <h3>Total Loans Owed</h3>
+            <p class="amount">{{.Summary.TotalLoansOwed.Amount | printf "%.2f"}} MAD</p>
+        </div>
+        {{end}}
+    </div>
+
+    {{if .Summary.CategorySummaries}}
+    <div class="section">
+        <h2>Spending by Category</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid #dee2e6; text-align: left;">
+                    <th style="padding: 0.75rem;">Category</th>
+                    <th style="padding: 0.75rem; text-align: right;">Spent</th>
+                    <th style="padding: 0.75rem; text-align: right;">Budget</th>
+                    <th style="padding: 0.75rem; text-align: right;">Remaining</th>
+                    <th style="padding: 0.75rem; text-align: center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Summary.CategorySummaries}}
+                <tr style="border-bottom: 1px solid #e9ecef;">
+                    <td style="padding: 0.75rem; font-weight: 600;">{{.CategoryName}}</td>
+                    <td style="padding: 0.75rem; text-align: right; color: #dc3545; font-weight: 600;">{{.Spent.Amount | printf "%.2f"}} MAD</td>
+                    <td style="padding: 0.75rem; text-align: right; color: #6c757d;">
+                        {{if .Budget}}{{.Budget.Amount | printf "%.2f"}} MAD{{else}}-{{end}}
+                    </td>
+                    <td style="padding: 0.75rem; text-align: right; color: #6c757d;">
+                        {{if .Budget}}{{.Remaining.Amount | printf "%.2f"}} MAD{{else}}-{{end}}
+                    </td>
+                    <td style="padding: 0.75rem; text-align: center;">
+                        {{if .Budget}}
+                            {{if .BudgetExceeded}}
+                                <span style="background: #dc3545; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">EXCEEDED</span>
+                            {{else}}
+                                <span style="background: #28a745; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">ON TRACK</span>
+                            {{end}}
+                        {{else}}
+                            <span style="color: #6c757d; font-size: 0.85rem;">No budget</span>
+                        {{end}}
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{end}}
+
+    {{if .Summary.ActiveLoans}}
+    <div class="section">
+        <h2>Active Loans (Salaf)</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid #dee2e6; text-align: left;">
+                    <th style="padding: 0.75rem;">Lender</th>
+                    <th style="padding: 0.75rem;">Description</th>
+                    <th style="padding: 0.75rem; text-align: right;">Borrowed</th>
+                    <th style="padding: 0.75rem; text-align: right;">Paid</th>
+                    <th style="padding: 0.75rem; text-align: right;">Remaining</th>
+                    <th style="padding: 0.75rem;">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Summary.ActiveLoans}}
+                <tr style="border-bottom: 1px solid #e9ecef;">
+                    <td style="padding: 0.75rem; font-weight: 600;">{{.LenderName}}</td>
+                    <td style="padding: 0.75rem; color: #6c757d;">{{.Description}}</td>
+                    <td style="padding: 0.75rem; text-align: right; color: #fb8500; font-weight: 600;">{{.Amount.Amount | printf "%.2f"}} MAD</td>
+                    <td style="padding: 0.75rem; text-align: right; color: #28a745;">{{.AmountPaid.Amount | printf "%.2f"}} MAD</td>
+                    <td style="padding: 0.75rem; text-align: right; color: #dc3545; font-weight: 600;">{{.RemainingAmount.Amount | printf "%.2f"}} MAD</td>
+                    <td style="padding: 0.75rem; color: #6c757d;">{{.BorrowedAt.Format "Jan 02, 2006"}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{end}}
+
+    {{if .Summary.Transactions}}
+    <div class="section">
+        <h2>Transactions</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid #dee2e6; text-align: left;">
+                    <th style="padding: 0.75rem;">Date</th>
+                    <th style="padding: 0.75rem;">Category</th>
+                    <th style="padding: 0.75rem;">Description</th>
+                    <th style="padding: 0.75rem; text-align: right;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Summary.Transactions}}
+                <tr style="border-bottom: 1px solid #e9ecef;">
+                    <td style="padding: 0.75rem; color: #6c757d;">{{.CreatedAt.Format "Jan 02, 2006"}}</td>
+                    <td style="padding: 0.75rem; font-weight: 600;">{{.Category.Name}}</td>
+                    <td style="padding: 0.75rem; color: #6c757d;">{{.Description}}</td>
+                    <td style="padding: 0.75rem; text-align: right; font-weight: 600; {{if .IsIncome}}color: #28a745;{{else}}color: #dc3545;{{end}}">
+                        {{if .IsIncome}}+{{end}}{{.Amount.Amount | printf "%.2f"}} MAD
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{end}}
+</div>
+{{end}}

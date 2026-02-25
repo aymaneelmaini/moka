@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <h1>🏦 Moka</h1>
+            <div class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="#" onclick="showModal('salary-modal')">Add Salary</a>
+                <a href="#" onclick="showModal('expense-modal')">Add Expense</a>
+                <a href="#" onclick="showModal('borrow-modal')">Borrow Money</a>
+                <a href="#" onclick="showModal('fixed-charges-modal')">Fixed Charges</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {{template "content" .}}
+    </main>
+
+    <!-- Modals -->
+    <div id="salary-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('salary-modal')">&times;</span>
+            <h2>Add Salary</h2>
+            <form hx-post="/salary" hx-target="#message" hx-swap="innerHTML">
+                <div class="form-group">
+                    <label for="salary-amount">Amount (MAD)</label>
+                    <input type="number" id="salary-amount" name="amount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="salary-description">Description</label>
+                    <input type="text" id="salary-description" name="description" placeholder="Monthly salary">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Salary</button>
+            </form>
+            <div id="message"></div>
+        </div>
+    </div>
+
+    <div id="expense-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('expense-modal')">&times;</span>
+            <h2>Record Expense</h2>
+            <form hx-post="/expense" hx-target="#message" hx-swap="innerHTML">
+                <div class="form-group">
+                    <label for="expense-amount">Amount (MAD)</label>
+                    <input type="number" id="expense-amount" name="amount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="expense-category">Category</label>
+                    <select id="expense-category" name="category" required>
+                        <option value="Food">Food</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Health">Health</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="expense-description">Description</label>
+                    <input type="text" id="expense-description" name="description">
+                </div>
+                <button type="submit" class="btn btn-primary">Record Expense</button>
+            </form>
+            <div id="message"></div>
+        </div>
+    </div>
+
+    <div id="borrow-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('borrow-modal')">&times;</span>
+            <h2>Borrow Money (Salaf)</h2>
+            <form hx-post="/loan/borrow" hx-target="#message" hx-swap="innerHTML">
+                <div class="form-group">
+                    <label for="borrow-amount">Amount (MAD)</label>
+                    <input type="number" id="borrow-amount" name="amount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="lender-name">Lender Name</label>
+                    <input type="text" id="lender-name" name="lender_name" placeholder="Friend's name" required>
+                </div>
+                <div class="form-group">
+                    <label for="borrow-description">Description</label>
+                    <input type="text" id="borrow-description" name="description" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Borrow Money</button>
+            </form>
+            <div id="message"></div>
+        </div>
+    </div>
+
+    <div id="fixed-charges-modal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="close" onclick="closeModal('fixed-charges-modal')">&times;</span>
+            <h2>Manage Fixed Charges</h2>
+            <form hx-post="/fixed-charge/add" hx-target="#fixed-charges-list" hx-swap="outerHTML">
+                <div class="form-group">
+                    <label for="charge-name">Name (e.g., Rent, Loan, WiFi)</label>
+                    <input type="text" id="charge-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="charge-amount">Amount (MAD)</label>
+                    <input type="number" id="charge-amount" name="amount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="charge-description">Description</label>
+                    <input type="text" id="charge-description" name="description">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Fixed Charge</button>
+            </form>
+            <div id="fixed-charges-list" hx-get="/fixed-charges" hx-trigger="load">
+                Loading...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showModal(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

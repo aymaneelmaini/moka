@@ -1,0 +1,8 @@
+<div class="alert alert-success">
+    ✓ Expense recorded: {{.Output.Transaction.Amount.Amount | printf "%.2f"}} MAD ({{.Output.Transaction.Category.Name}})
+    {{if .Output.Budget}}
+    <br>
+    Budget remaining: {{.Output.RemainingBudget.Amount | printf "%.2f"}} MAD ({{.Output.PercentageUsed | printf "%.0f"}}% used)
+    {{if .Output.BudgetExceeded}}<span class="text-warning">⚠️ Budget exceeded!</span>{{end}}
+    {{end}}
+</div>

@@ -1,0 +1,33 @@
+<div id="fixed-charges-list" style="margin-top: 2rem;">
+    <h3 style="margin-bottom: 1rem;">Current Fixed Charges</h3>
+    {{if .Charges}}
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="border-bottom: 2px solid #dee2e6; text-align: left;">
+                <th style="padding: 0.75rem;">Name</th>
+                <th style="padding: 0.75rem;">Amount</th>
+                <th style="padding: 0.75rem;">Description</th>
+                <th style="padding: 0.75rem;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Charges}}
+            <tr style="border-bottom: 1px solid #e9ecef;">
+                <td style="padding: 0.75rem; font-weight: 600;">{{.Name}}</td>
+                <td style="padding: 0.75rem; color: #dc3545;">{{.Amount.Amount | printf "%.2f"}} MAD</td>
+                <td style="padding: 0.75rem; color: #6c757d;">{{.Description}}</td>
+                <td style="padding: 0.75rem;">
+                    {{if .IsActive}}
+                    <span style="color: #28a745; font-weight: 600;">Active</span>
+                    {{else}}
+                    <span style="color: #6c757d;">Inactive</span>
+                    {{end}}
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <p style="color: #6c757d; text-align: center; padding: 2rem;">No fixed charges yet. Add one above!</p>
+    {{end}}
+</div>

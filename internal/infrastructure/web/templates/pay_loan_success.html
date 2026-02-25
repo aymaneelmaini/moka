@@ -1,0 +1,9 @@
+<div class="alert alert-success">
+    ✓ Paid {{.Output.Transaction.Amount.Amount | printf "%.2f"}} MAD
+    <br>
+    {{if .Output.FullyPaid}}
+    <strong>Loan fully paid! 🎉</strong>
+    {{else}}
+    Remaining: {{.Output.RemainingAmount.Amount | printf "%.2f"}} MAD
+    {{end}}
+</div>
