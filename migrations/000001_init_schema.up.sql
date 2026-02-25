@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS transactions (
     id TEXT PRIMARY KEY,
-    amount_cents INTEGER NOT NULL,
+    amount REAL NOT NULL,
     currency TEXT NOT NULL DEFAULT 'MAD',
     category_name TEXT NOT NULL,
     category_type TEXT NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 CREATE TABLE IF NOT EXISTS budgets (
     id TEXT PRIMARY KEY,
     category_name TEXT NOT NULL,
-    limit_cents INTEGER NOT NULL,
+    limit_amount REAL NOT NULL,
     currency TEXT NOT NULL DEFAULT 'MAD',
     month INTEGER NOT NULL CHECK(month >= 1 AND month <= 12),
     year INTEGER NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS budgets (
 CREATE TABLE IF NOT EXISTS fixed_charges (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    amount_cents INTEGER NOT NULL,
+    amount REAL NOT NULL,
     currency TEXT NOT NULL DEFAULT 'MAD',
     description TEXT,
     is_active BOOLEAN NOT NULL DEFAULT 1
@@ -31,8 +31,8 @@ CREATE TABLE IF NOT EXISTS fixed_charges (
 CREATE TABLE IF NOT EXISTS loans (
     id TEXT PRIMARY KEY,
     lender_name TEXT NOT NULL,
-    amount_cents INTEGER NOT NULL,
-    amount_paid_cents INTEGER NOT NULL DEFAULT 0,
+    amount REAL NOT NULL,
+    amount_paid REAL NOT NULL DEFAULT 0,
     currency TEXT NOT NULL DEFAULT 'MAD',
     borrowed_at DATETIME NOT NULL,
     paid_back_at DATETIME,
