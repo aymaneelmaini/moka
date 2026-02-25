@@ -3,8 +3,8 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
-	"moka/internal/domain/transaction"
-	"moka/internal/shared"
+	"github.com/aymaneelmaini/moka/internal/domain/transaction"
+	"github.com/aymaneelmaini/moka/internal/shared"
 	"time"
 )
 
@@ -18,14 +18,14 @@ func NewTransactionRepository(db *DB) *TransactionRepository {
 
 func (r *TransactionRepository) Save(tx transaction.Transaction) error {
 	query := `
-		INSERT INTO transactions (id, amount_cents, currency, category_name, category_type, description, type, created_at)
+		INSERT INTO transactions (id, amount, currency, category_name, category_type, description, type, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	_, err := r.db.Exec(
 		query,
 		tx.ID(),
-		tx.Amount().AmountInCents(),
+		tx.Amount().Amount(),
 		tx.Amount().Currency(),
 		tx.Category().Name(),
 		string(tx.Category().Type()),
@@ -43,7 +43,7 @@ func (r *TransactionRepository) Save(tx transaction.Transaction) error {
 
 func (r *TransactionRepository) FindByID(id string) (transaction.Transaction, error) {
 	query := `
-		SELECT id, amount_cents, currency, category_name, category_type, description, type, created_at
+		SELECT id, amount, currency, category_name, category_type, description, type, created_at
 		FROM transactions
 		WHERE id = ?
 	`
@@ -54,7 +54,7 @@ func (r *TransactionRepository) FindByID(id string) (transaction.Transaction, er
 
 func (r *TransactionRepository) FindAll() ([]transaction.Transaction, error) {
 	query := `
-		SELECT id, amount_cents, currency, category_name, category_type, description, type, created_at
+		SELECT id, amount, currency, category_name, category_type, description, type, created_at
 		FROM transactions
 		ORDER BY created_at DESC
 	`
@@ -70,7 +70,7 @@ func (r *TransactionRepository) FindAll() ([]transaction.Transaction, error) {
 
 func (r *TransactionRepository) FindByDateRange(start, end time.Time) ([]transaction.Transaction, error) {
 	query := `
-		SELECT id, amount_cents, currency, category_name, category_type, description, type, created_at
+		SELECT id, amount, currency, category_name, category_type, description, type, created_at
 		FROM transactions
 		WHERE created_at >= ? AND created_at <= ?
 		ORDER BY created_at DESC
@@ -115,7 +115,7 @@ func (r *TransactionRepository) Delete(id string) error {
 func (r *TransactionRepository) scanTransaction(row *sql.Row) (transaction.Transaction, error) {
 	var (
 		id           string
-		amountCents  int64
+		amount       float64
 		currency     string
 		categoryName string
 		categoryType string
@@ -126,7 +126,7 @@ func (r *TransactionRepository) scanTransaction(row *sql.Row) (transaction.Trans
 
 	err := row.Scan(
 		&id,
-		&amountCents,
+		&amount,
 		&currency,
 		&categoryName,
 		&categoryType,
@@ -143,7 +143,7 @@ func (r *TransactionRepository) scanTransaction(row *sql.Row) (transaction.Trans
 		return transaction.Transaction{}, fmt.Errorf("failed to scan transaction: %w", err)
 	}
 
-	money := shared.UnsafeFromCents(amountCents)
+	money := shared.UnsafeNewMoney(amount)
 	category, _ := shared.NewCategory(categoryName, shared.CategoryType(categoryType))
 
 	return transaction.NewTransaction(
@@ -162,7 +162,7 @@ func (r *TransactionRepository) scanTransactions(rows *sql.Rows) ([]transaction.
 	for rows.Next() {
 		var (
 			id           string
-			amountCents  int64
+			amount       float64
 			currency     string
 			categoryName string
 			categoryType string
@@ -173,7 +173,7 @@ func (r *TransactionRepository) scanTransactions(rows *sql.Rows) ([]transaction.
 
 		err := rows.Scan(
 			&id,
-			&amountCents,
+			&amount,
 			&currency,
 			&categoryName,
 			&categoryType,
@@ -186,7 +186,7 @@ func (r *TransactionRepository) scanTransactions(rows *sql.Rows) ([]transaction.
 			return nil, fmt.Errorf("failed to scan transaction: %w", err)
 		}
 
-		money := shared.UnsafeFromCents(amountCents)
+		money := shared.UnsafeNewMoney(amount)
 		category, _ := shared.NewCategory(categoryName, shared.CategoryType(categoryType))
 
 		tx := transaction.NewTransaction(

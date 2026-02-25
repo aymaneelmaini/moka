@@ -1,6 +1,6 @@
 package loan
 
-import "moka/internal/shared"
+import "github.com/aymaneelmaini/moka/internal/shared"
 
 // CalculateTotalOwed calculates total amount still owed across all active loans (pure function)
 func CalculateTotalOwed(loans []Loan) shared.Money {

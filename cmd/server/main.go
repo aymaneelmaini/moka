@@ -1,26 +1,44 @@
 package main
 
 import (
+	"embed"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 
-	"moka/internal/application"
-	"moka/internal/infrastructure/persistence/sqlite"
-	"moka/internal/infrastructure/web/handlers"
+	"github.com/aymaneelmaini/moka/internal/application"
+	"github.com/aymaneelmaini/moka/internal/infrastructure/persistence/sqlite"
+	"github.com/aymaneelmaini/moka/internal/infrastructure/web/handlers"
 )
 
+//go:embed ../internal/infrastructure/web/templates/*.html
+var templatesFS embed.FS
+
+//go:embed ../static/*
+var staticFS embed.FS
+
+//go:embed ../migrations/*.sql
+var migrationsFS embed.FS
+
 func main() {
+	dataDir := os.Getenv("MOKA_DATA_DIR")
+	if dataDir == "" {
+		dataDir = "."
+	}
+
+	dbPath := filepath.Join(dataDir, "moka.db")
 
 	log.Println("Initializing database...")
-	db, err := sqlite.NewDB("./moka.db")
+	db, err := sqlite.NewDB(dbPath)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
 
 	log.Println("Running migrations...")
-	if err := db.RunMigrations("./migrations"); err != nil {
+	if err := db.RunMigrationsFromFS(migrationsFS, "migrations"); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
@@ -35,10 +53,10 @@ func main() {
 	recordExpenseUC := application.NewRecordExpenseUseCase(transactionRepo, budgetRepo)
 	borrowMoneyUC := application.NewBorrowMoneyUseCase(loanRepo, transactionRepo)
 	payLoanUC := application.NewPayLoanUseCase(loanRepo, transactionRepo)
-	getMonthlySummaryUC := application.NewGetMonthlySummaryUseCase(transactionRepo, budgetRepo, loanRepo)
+	getMonthlySummaryUC := application.NewGetMonthlySummaryUseCase(transactionRepo, budgetRepo, loanRepo, fixedChargeRepo)
 
 	log.Println("Loading templates...")
-	tmpl, err := template.ParseGlob("./internal/infrastructure/web/templates/*.html")
+	tmpl, err := template.ParseFS(templatesFS, "internal/infrastructure/web/templates/*.html")
 	if err != nil {
 		log.Fatalf("Failed to load templates: %v", err)
 	}
@@ -52,8 +70,8 @@ func main() {
 	log.Println("Setting up routes...")
 	mux := http.NewServeMux()
 
-	fs := http.FileServer(http.Dir("./static"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	staticFiles := http.FileServer(http.FS(staticFS))
+	mux.Handle("/static/", staticFiles)
 
 	mux.HandleFunc("/", dashboardHandler.ShowDashboard)
 
@@ -64,8 +82,8 @@ func main() {
 	mux.HandleFunc("/fixed-charges", fixedChargeHandler.ListFixedCharges)
 	mux.HandleFunc("/fixed-charge/add", fixedChargeHandler.AddFixedCharge)
 
-	port := ":8080"
-	log.Printf("✨ Moka is running on http://localhost%s", port)
+	port := ":9876"
+	log.Printf("✨ Moka is running on http://moka.local%s", port)
 	log.Println("")
 
 	if err := http.ListenAndServe(port, mux); err != nil {

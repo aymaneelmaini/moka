@@ -1,7 +1,7 @@
 package fixed_charge
 
 import (
-	"moka/internal/shared"
+	"github.com/aymaneelmaini/moka/internal/shared"
 )
 
 type FixedCharge struct {

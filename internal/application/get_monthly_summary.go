@@ -2,10 +2,11 @@ package application
 
 import (
 	"fmt"
-	"moka/internal/domain/budget"
-	"moka/internal/domain/loan"
-	"moka/internal/domain/transaction"
-	"moka/internal/shared"
+	"github.com/aymaneelmaini/moka/internal/domain/budget"
+	"github.com/aymaneelmaini/moka/internal/domain/fixed_charge"
+	"github.com/aymaneelmaini/moka/internal/domain/loan"
+	"github.com/aymaneelmaini/moka/internal/domain/transaction"
+	"github.com/aymaneelmaini/moka/internal/shared"
 	"time"
 )
 
@@ -13,17 +14,20 @@ type GetMonthlySummaryUseCase struct {
 	transactionRepo transaction.Repository
 	budgetRepo      budget.Repository
 	loanRepo        loan.Repository
+	fixedChargeRepo fixed_charge.Repository
 }
 
 func NewGetMonthlySummaryUseCase(
 	transactionRepo transaction.Repository,
 	budgetRepo budget.Repository,
 	loanRepo loan.Repository,
+	fixedChargeRepo fixed_charge.Repository,
 ) *GetMonthlySummaryUseCase {
 	return &GetMonthlySummaryUseCase{
 		transactionRepo: transactionRepo,
 		budgetRepo:      budgetRepo,
 		loanRepo:        loanRepo,
+		fixedChargeRepo: fixedChargeRepo,
 	}
 }
 
@@ -51,6 +55,8 @@ type GetMonthlySummaryOutput struct {
 	CategorySummaries []CategorySummary
 	TotalLoansOwed    shared.Money
 	ActiveLoans       []loan.Loan
+	FixedCharges      []fixed_charge.FixedCharge
+	FixedChargesTotal shared.Money
 	Transactions      []transaction.Transaction
 }
 
@@ -62,7 +68,6 @@ func (uc *GetMonthlySummaryUseCase) Execute(input GetMonthlySummaryInput) (*GetM
 
 	totalIncome := transaction.CalculateMonthlyTotal(transactions, transaction.TransactionTypeIncome)
 	totalExpenses := transaction.CalculateMonthlyTotal(transactions, transaction.TransactionTypeExpense)
-	netSavings := totalIncome.Subtract(totalExpenses)
 	balance := transaction.CalculateBalance(transactions)
 
 	categoryTotals := transaction.CalculateCategoryTotal(transactions)
@@ -98,16 +103,25 @@ func (uc *GetMonthlySummaryUseCase) Execute(input GetMonthlySummaryInput) (*GetM
 	activeLoans, _ := uc.loanRepo.FindActive()
 	totalLoansOwed := loan.CalculateTotalOwed(activeLoans)
 
+	fixedCharges, _ := uc.fixedChargeRepo.FindActive()
+	fixedChargesTotal := fixed_charge.CalculateTotalCharges(fixedCharges)
+
+	totalExpensesWithFixed := totalExpenses.Add(fixedChargesTotal)
+	netSavingsWithFixed := totalIncome.Subtract(totalExpensesWithFixed)
+	balanceWithFixed := balance.Subtract(fixedChargesTotal)
+
 	return &GetMonthlySummaryOutput{
 		Year:              input.Year,
 		Month:             input.Month,
 		TotalIncome:       totalIncome,
-		TotalExpenses:     totalExpenses,
-		NetSavings:        netSavings,
-		Balance:           balance,
+		TotalExpenses:     totalExpensesWithFixed,
+		NetSavings:        netSavingsWithFixed,
+		Balance:           balanceWithFixed,
 		CategorySummaries: categorySummaries,
 		TotalLoansOwed:    totalLoansOwed,
 		ActiveLoans:       activeLoans,
+		FixedCharges:      fixedCharges,
+		FixedChargesTotal: fixedChargesTotal,
 		Transactions:      transactions,
 	}, nil
 }

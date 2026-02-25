@@ -123,6 +123,23 @@
         </div>
     </div>
 
+    <div id="pay-loan-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('pay-loan-modal')">&times;</span>
+            <h2>Pay Loan</h2>
+            <p id="pay-loan-info" style="margin-bottom: 1rem; color: #6c757d;"></p>
+            <form hx-post="/loan/pay" hx-swap="none">
+                <input type="hidden" id="pay-loan-id" name="loan_id">
+                <div class="form-group">
+                    <label for="payment-amount">Payment Amount (MAD)</label>
+                    <input type="number" id="payment-amount" name="amount" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Pay Back</button>
+            </form>
+            <div id="pay-message"></div>
+        </div>
+    </div>
+
     <script>
         function showModal(id) {
             document.getElementById(id).style.display = 'block';
@@ -130,11 +147,24 @@
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
         }
+        function openPayLoanModal(loanId, lenderName, remainingAmount) {
+            document.getElementById('pay-loan-id').value = loanId;
+            document.getElementById('pay-loan-info').textContent = 'Paying back ' + lenderName + ' - Remaining: ' + parseFloat(remainingAmount).toFixed(2) + ' MAD';
+            document.getElementById('payment-amount').setAttribute('max', remainingAmount);
+            document.getElementById('payment-amount').value = parseFloat(remainingAmount).toFixed(2);
+            showModal('pay-loan-modal');
+        }
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
             }
         }
+
+        document.body.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.successful && event.detail.xhr.getResponseHeader('HX-Redirect')) {
+                window.location.href = event.detail.xhr.getResponseHeader('HX-Redirect');
+            }
+        });
     </script>
 </body>
 </html>

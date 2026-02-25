@@ -80,6 +80,43 @@
     </div>
     {{end}}
 
+    {{if .Summary.FixedCharges}}
+    <div class="section">
+        <h2>Fixed Charges (Monthly)</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid #dee2e6; text-align: left;">
+                    <th style="padding: 0.75rem;">Name</th>
+                    <th style="padding: 0.75rem;">Description</th>
+                    <th style="padding: 0.75rem; text-align: right;">Amount</th>
+                    <th style="padding: 0.75rem; text-align: center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Summary.FixedCharges}}
+                <tr style="border-bottom: 1px solid #e9ecef;">
+                    <td style="padding: 0.75rem; font-weight: 600;">{{.Name}}</td>
+                    <td style="padding: 0.75rem; color: #6c757d;">{{.Description}}</td>
+                    <td style="padding: 0.75rem; text-align: right; color: #dc3545; font-weight: 600;">{{.Amount.Amount | printf "%.2f"}} MAD</td>
+                    <td style="padding: 0.75rem; text-align: center;">
+                        {{if .IsActive}}
+                            <span style="background: #28a745; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">ACTIVE</span>
+                        {{else}}
+                            <span style="background: #6c757d; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">INACTIVE</span>
+                        {{end}}
+                    </td>
+                </tr>
+                {{end}}
+                <tr style="border-top: 2px solid #dee2e6; background: #f8f9fa;">
+                    <td colspan="2" style="padding: 0.75rem; font-weight: 700;">TOTAL FIXED CHARGES</td>
+                    <td style="padding: 0.75rem; text-align: right; color: #dc3545; font-weight: 700; font-size: 1.1rem;">{{.Summary.FixedChargesTotal.Amount | printf "%.2f"}} MAD</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {{end}}
+
     {{if .Summary.ActiveLoans}}
     <div class="section">
         <h2>Active Loans (Salaf)</h2>
@@ -92,6 +129,7 @@
                     <th style="padding: 0.75rem; text-align: right;">Paid</th>
                     <th style="padding: 0.75rem; text-align: right;">Remaining</th>
                     <th style="padding: 0.75rem;">Date</th>
+                    <th style="padding: 0.75rem; text-align: center;">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -103,6 +141,9 @@
                     <td style="padding: 0.75rem; text-align: right; color: #28a745;">{{.AmountPaid.Amount | printf "%.2f"}} MAD</td>
                     <td style="padding: 0.75rem; text-align: right; color: #dc3545; font-weight: 600;">{{.RemainingAmount.Amount | printf "%.2f"}} MAD</td>
                     <td style="padding: 0.75rem; color: #6c757d;">{{.BorrowedAt.Format "Jan 02, 2006"}}</td>
+                    <td style="padding: 0.75rem; text-align: center;">
+                        <button class="btn btn-small btn-primary" onclick="openPayLoanModal('{{.ID}}', '{{.LenderName}}', {{.RemainingAmount.Amount | printf "%.2f"}})">Pay</button>
+                    </td>
                 </tr>
                 {{end}}
             </tbody>

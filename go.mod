@@ -1,4 +1,4 @@
-module moka
+module github.com/aymaneelmaini/moka
 
 go 1.24.0
 

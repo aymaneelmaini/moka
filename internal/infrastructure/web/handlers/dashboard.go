@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"html/template"
-	"moka/internal/application"
+	"github.com/aymaneelmaini/moka/internal/application"
 	"net/http"
 	"strconv"
 	"time"

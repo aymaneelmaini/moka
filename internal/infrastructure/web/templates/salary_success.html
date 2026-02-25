@@ -1,7 +1,21 @@
 <div class="alert alert-success">
-    ✓ Salary added: {{.Output.SalaryTransaction.Amount.Amount | printf "%.2f"}} MAD
-    <br>
-    Fixed charges deducted: {{.Output.FixedChargesTotal.Amount | printf "%.2f"}} MAD
-    <br>
-    <strong>Net amount: {{.Output.NetAmount.Amount | printf "%.2f"}} MAD</strong>
+    <strong>✓ Salary added successfully!</strong>
+    <br><br>
+    Salary: {{.Output.SalaryTransaction.Amount.Amount | printf "%.2f"}} MAD
+    {{if .Output.FixedCharges}}
+    <br><br>
+    <strong>Fixed charges auto-deducted:</strong>
+    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+    {{range .Output.FixedCharges}}
+        <li>{{.Name}}: {{.Amount.Amount | printf "%.2f"}} MAD - {{.Description}}</li>
+    {{end}}
+    </ul>
+    Total deducted: {{.Output.FixedChargesTotal.Amount | printf "%.2f"}} MAD
+    {{else}}
+    <br>No fixed charges deducted (no active fixed charges)
+    {{end}}
+    <br><br>
+    <strong>Net amount after deductions: {{.Output.NetAmount.Amount | printf "%.2f"}} MAD</strong>
+    <br><br>
+    <a href="/" class="btn btn-primary">View Dashboard</a>
 </div>

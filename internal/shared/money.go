@@ -16,7 +16,7 @@ var (
 )
 
 type Money struct {
-	amount int64
+	amount float64
 }
 
 func NewMoney(amount float64) (Money, error) {
@@ -26,36 +26,19 @@ func NewMoney(amount float64) (Money, error) {
 		}
 		return Money{}, ErrNegativeAmount
 	}
-
-	cents := int64(amount * 100)
-	return Money{amount: cents}, nil
+	return Money{amount: amount}, nil
 }
 
-func FromCents(cents int64) (Money, error) {
-	if cents <= 0 {
-		if cents == 0 {
-			return Money{}, ErrZeroAmount
-		}
-		return Money{}, ErrNegativeAmount
-	}
-	return Money{amount: cents}, nil
-}
-
-// UnsafeFromCents creates Money without validation (for internal use like repositories)
-func UnsafeFromCents(cents int64) Money {
-	return Money{amount: cents}
+func UnsafeNewMoney(amount float64) Money {
+	return Money{amount: amount}
 }
 
 func (m Money) Amount() float64 {
-	return float64(m.amount) / 100.0
+	return m.amount
 }
 
 func (m Money) Currency() string {
 	return CurrencyMAD
-}
-
-func (m Money) AmountInCents() int64 {
-	return m.amount
 }
 
 func (m Money) Add(other Money) Money {
@@ -87,7 +70,7 @@ func (m Money) LessThan(other Money) bool {
 }
 
 func (m Money) String() string {
-	return fmt.Sprintf("%.2f %s", m.Amount(), CurrencyMAD)
+	return fmt.Sprintf("%.2f %s", m.amount, CurrencyMAD)
 }
 
 func Zero() Money {

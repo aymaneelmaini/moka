@@ -1,6 +1,6 @@
 package fixed_charge
 
-import "moka/internal/shared"
+import "github.com/aymaneelmaini/moka/internal/shared"
 
 // CalculateTotalCharges calculates total of all active fixed charges (pure function)
 func CalculateTotalCharges(charges []FixedCharge) shared.Money {

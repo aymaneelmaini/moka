@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"html/template"
-	"moka/internal/domain/fixed_charge"
-	"moka/internal/shared"
+	"github.com/aymaneelmaini/moka/internal/domain/fixed_charge"
+	"github.com/aymaneelmaini/moka/internal/shared"
 	"net/http"
 	"strconv"
 

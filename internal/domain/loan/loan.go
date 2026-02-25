@@ -1,7 +1,7 @@
 package loan
 
 import (
-	"moka/internal/shared"
+	"github.com/aymaneelmaini/moka/internal/shared"
 	"time"
 )
 

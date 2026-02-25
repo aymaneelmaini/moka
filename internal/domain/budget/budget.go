@@ -1,7 +1,7 @@
 package budget
 
 import (
-	"moka/internal/shared"
+	"github.com/aymaneelmaini/moka/internal/shared"
 	"time"
 )
 

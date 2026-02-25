@@ -2,9 +2,9 @@ package application
 
 import (
 	"fmt"
-	"moka/internal/domain/fixed_charge"
-	"moka/internal/domain/transaction"
-	"moka/internal/shared"
+	"github.com/aymaneelmaini/moka/internal/domain/fixed_charge"
+	"github.com/aymaneelmaini/moka/internal/domain/transaction"
+	"github.com/aymaneelmaini/moka/internal/shared"
 	"time"
 
 	"github.com/google/uuid"

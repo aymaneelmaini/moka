@@ -3,8 +3,8 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
-	"moka/internal/domain/loan"
-	"moka/internal/shared"
+	"github.com/aymaneelmaini/moka/internal/domain/loan"
+	"github.com/aymaneelmaini/moka/internal/shared"
 	"time"
 )
 
@@ -18,7 +18,7 @@ func NewLoanRepository(db *DB) *LoanRepository {
 
 func (r *LoanRepository) Save(l loan.Loan) error {
 	query := `
-		INSERT INTO loans (id, lender_name, amount_cents, amount_paid_cents, currency, borrowed_at, paid_back_at, status, description)
+		INSERT INTO loans (id, lender_name, amount, amount_paid, currency, borrowed_at, paid_back_at, status, description)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
@@ -31,8 +31,8 @@ func (r *LoanRepository) Save(l loan.Loan) error {
 		query,
 		l.ID(),
 		l.LenderName(),
-		l.Amount().AmountInCents(),
-		l.AmountPaid().AmountInCents(),
+		l.Amount().Amount(),
+		l.AmountPaid().Amount(),
 		l.Amount().Currency(),
 		l.BorrowedAt(),
 		paidBackAt,
@@ -49,7 +49,7 @@ func (r *LoanRepository) Save(l loan.Loan) error {
 
 func (r *LoanRepository) FindByID(id string) (loan.Loan, error) {
 	query := `
-		SELECT id, lender_name, amount_cents, amount_paid_cents, currency, borrowed_at, paid_back_at, status, description
+		SELECT id, lender_name, amount, amount_paid, currency, borrowed_at, paid_back_at, status, description
 		FROM loans
 		WHERE id = ?
 	`
@@ -60,7 +60,7 @@ func (r *LoanRepository) FindByID(id string) (loan.Loan, error) {
 
 func (r *LoanRepository) FindAll() ([]loan.Loan, error) {
 	query := `
-		SELECT id, lender_name, amount_cents, amount_paid_cents, currency, borrowed_at, paid_back_at, status, description
+		SELECT id, lender_name, amount, amount_paid, currency, borrowed_at, paid_back_at, status, description
 		FROM loans
 		ORDER BY borrowed_at DESC
 	`
@@ -76,7 +76,7 @@ func (r *LoanRepository) FindAll() ([]loan.Loan, error) {
 
 func (r *LoanRepository) FindActive() ([]loan.Loan, error) {
 	query := `
-		SELECT id, lender_name, amount_cents, amount_paid_cents, currency, borrowed_at, paid_back_at, status, description
+		SELECT id, lender_name, amount, amount_paid, currency, borrowed_at, paid_back_at, status, description
 		FROM loans
 		WHERE status = 'active'
 		ORDER BY borrowed_at DESC
@@ -93,7 +93,7 @@ func (r *LoanRepository) FindActive() ([]loan.Loan, error) {
 
 func (r *LoanRepository) FindByStatus(status loan.LoanStatus) ([]loan.Loan, error) {
 	query := `
-		SELECT id, lender_name, amount_cents, amount_paid_cents, currency, borrowed_at, paid_back_at, status, description
+		SELECT id, lender_name, amount, amount_paid, currency, borrowed_at, paid_back_at, status, description
 		FROM loans
 		WHERE status = ?
 		ORDER BY borrowed_at DESC
@@ -111,7 +111,7 @@ func (r *LoanRepository) FindByStatus(status loan.LoanStatus) ([]loan.Loan, erro
 func (r *LoanRepository) Update(l loan.Loan) error {
 	query := `
 		UPDATE loans
-		SET lender_name = ?, amount_cents = ?, amount_paid_cents = ?, currency = ?, borrowed_at = ?, paid_back_at = ?, status = ?, description = ?
+		SET lender_name = ?, amount = ?, amount_paid = ?, currency = ?, borrowed_at = ?, paid_back_at = ?, status = ?, description = ?
 		WHERE id = ?
 	`
 
@@ -123,8 +123,8 @@ func (r *LoanRepository) Update(l loan.Loan) error {
 	result, err := r.db.Exec(
 		query,
 		l.LenderName(),
-		l.Amount().AmountInCents(),
-		l.AmountPaid().AmountInCents(),
+		l.Amount().Amount(),
+		l.AmountPaid().Amount(),
 		l.Amount().Currency(),
 		l.BorrowedAt(),
 		paidBackAt,
@@ -173,8 +173,8 @@ func (r *LoanRepository) scanLoan(row *sql.Row) (loan.Loan, error) {
 	var (
 		id            string
 		lenderName    string
-		amountCents   int64
-		amountPaidCents int64
+		amount        float64
+		amountPaid    float64
 		currency      string
 		borrowedAt    time.Time
 		paidBackAt    sql.NullTime
@@ -185,8 +185,8 @@ func (r *LoanRepository) scanLoan(row *sql.Row) (loan.Loan, error) {
 	err := row.Scan(
 		&id,
 		&lenderName,
-		&amountCents,
-		&amountPaidCents,
+		&amount,
+		&amountPaid,
 		&currency,
 		&borrowedAt,
 		&paidBackAt,
@@ -202,13 +202,13 @@ func (r *LoanRepository) scanLoan(row *sql.Row) (loan.Loan, error) {
 		return loan.Loan{}, fmt.Errorf("failed to scan loan: %w", err)
 	}
 
-	amount := shared.UnsafeFromCents(amountCents)
-	amountPaid := shared.UnsafeFromCents(amountPaidCents)
+	amountMoney := shared.UnsafeNewMoney(amount)
+	amountPaidMoney := shared.UnsafeNewMoney(amountPaid)
 
-	l := loan.NewLoan(id, lenderName, amount, borrowedAt, description)
+	l := loan.NewLoan(id, lenderName, amountMoney, borrowedAt, description)
 
-	if amountPaidCents > 0 {
-		paymentAmount := amountPaid
+	if amountPaid > 0 {
+		paymentAmount := amountPaidMoney
 		paymentTime := borrowedAt
 		if paidBackAt.Valid {
 			paymentTime = paidBackAt.Time
@@ -226,8 +226,8 @@ func (r *LoanRepository) scanLoans(rows *sql.Rows) ([]loan.Loan, error) {
 		var (
 			id            string
 			lenderName    string
-			amountCents   int64
-			amountPaidCents int64
+			amount        float64
+			amountPaid    float64
 			currency      string
 			borrowedAt    time.Time
 			paidBackAt    sql.NullTime
@@ -238,8 +238,8 @@ func (r *LoanRepository) scanLoans(rows *sql.Rows) ([]loan.Loan, error) {
 		err := rows.Scan(
 			&id,
 			&lenderName,
-			&amountCents,
-			&amountPaidCents,
+			&amount,
+			&amountPaid,
 			&currency,
 			&borrowedAt,
 			&paidBackAt,
@@ -251,13 +251,13 @@ func (r *LoanRepository) scanLoans(rows *sql.Rows) ([]loan.Loan, error) {
 			return nil, fmt.Errorf("failed to scan loan: %w", err)
 		}
 
-		amount := shared.UnsafeFromCents(amountCents)
-		amountPaid := shared.UnsafeFromCents(amountPaidCents)
+		amountMoney := shared.UnsafeNewMoney(amount)
+		amountPaidMoney := shared.UnsafeNewMoney(amountPaid)
 
-		l := loan.NewLoan(id, lenderName, amount, borrowedAt, description)
+		l := loan.NewLoan(id, lenderName, amountMoney, borrowedAt, description)
 
-		if amountPaidCents > 0 {
-			paymentAmount := amountPaid
+		if amountPaid > 0 {
+			paymentAmount := amountPaidMoney
 			paymentTime := borrowedAt
 			if paidBackAt.Valid {
 				paymentTime = paidBackAt.Time

@@ -3,8 +3,8 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
-	"moka/internal/domain/fixed_charge"
-	"moka/internal/shared"
+	"github.com/aymaneelmaini/moka/internal/domain/fixed_charge"
+	"github.com/aymaneelmaini/moka/internal/shared"
 )
 
 type FixedChargeRepository struct {
@@ -17,7 +17,7 @@ func NewFixedChargeRepository(db *DB) *FixedChargeRepository {
 
 func (r *FixedChargeRepository) Save(fc fixed_charge.FixedCharge) error {
 	query := `
-		INSERT INTO fixed_charges (id, name, amount_cents, currency, description, is_active)
+		INSERT INTO fixed_charges (id, name, amount, currency, description, is_active)
 		VALUES (?, ?, ?, ?, ?, ?)
 	`
 
@@ -25,7 +25,7 @@ func (r *FixedChargeRepository) Save(fc fixed_charge.FixedCharge) error {
 		query,
 		fc.ID(),
 		fc.Name(),
-		fc.Amount().AmountInCents(),
+		fc.Amount().Amount(),
 		fc.Amount().Currency(),
 		fc.Description(),
 		fc.IsActive(),
@@ -40,7 +40,7 @@ func (r *FixedChargeRepository) Save(fc fixed_charge.FixedCharge) error {
 
 func (r *FixedChargeRepository) FindByID(id string) (fixed_charge.FixedCharge, error) {
 	query := `
-		SELECT id, name, amount_cents, currency, description, is_active
+		SELECT id, name, amount, currency, description, is_active
 		FROM fixed_charges
 		WHERE id = ?
 	`
@@ -51,7 +51,7 @@ func (r *FixedChargeRepository) FindByID(id string) (fixed_charge.FixedCharge, e
 
 func (r *FixedChargeRepository) FindAll() ([]fixed_charge.FixedCharge, error) {
 	query := `
-		SELECT id, name, amount_cents, currency, description, is_active
+		SELECT id, name, amount, currency, description, is_active
 		FROM fixed_charges
 		ORDER BY name
 	`
@@ -67,7 +67,7 @@ func (r *FixedChargeRepository) FindAll() ([]fixed_charge.FixedCharge, error) {
 
 func (r *FixedChargeRepository) FindActive() ([]fixed_charge.FixedCharge, error) {
 	query := `
-		SELECT id, name, amount_cents, currency, description, is_active
+		SELECT id, name, amount, currency, description, is_active
 		FROM fixed_charges
 		WHERE is_active = 1
 		ORDER BY name
@@ -85,14 +85,14 @@ func (r *FixedChargeRepository) FindActive() ([]fixed_charge.FixedCharge, error)
 func (r *FixedChargeRepository) Update(fc fixed_charge.FixedCharge) error {
 	query := `
 		UPDATE fixed_charges
-		SET name = ?, amount_cents = ?, currency = ?, description = ?, is_active = ?
+		SET name = ?, amount = ?, currency = ?, description = ?, is_active = ?
 		WHERE id = ?
 	`
 
 	result, err := r.db.Exec(
 		query,
 		fc.Name(),
-		fc.Amount().AmountInCents(),
+		fc.Amount().Amount(),
 		fc.Amount().Currency(),
 		fc.Description(),
 		fc.IsActive(),
@@ -140,13 +140,13 @@ func (r *FixedChargeRepository) scanFixedCharge(row *sql.Row) (fixed_charge.Fixe
 	var (
 		id          string
 		name        string
-		amountCents int64
+		amount      float64
 		currency    string
 		description string
 		isActive    bool
 	)
 
-	err := row.Scan(&id, &name, &amountCents, &currency, &description, &isActive)
+	err := row.Scan(&id, &name, &amount, &currency, &description, &isActive)
 
 	if err == sql.ErrNoRows {
 		return fixed_charge.FixedCharge{}, shared.ErrNotFound
@@ -156,7 +156,7 @@ func (r *FixedChargeRepository) scanFixedCharge(row *sql.Row) (fixed_charge.Fixe
 		return fixed_charge.FixedCharge{}, fmt.Errorf("failed to scan fixed charge: %w", err)
 	}
 
-	money := shared.UnsafeFromCents(amountCents)
+	money := shared.UnsafeNewMoney(amount)
 
 	return fixed_charge.NewFixedCharge(id, name, money, description, isActive), nil
 }
@@ -168,18 +168,18 @@ func (r *FixedChargeRepository) scanFixedCharges(rows *sql.Rows) ([]fixed_charge
 		var (
 			id          string
 			name        string
-			amountCents int64
+			amount      float64
 			currency    string
 			description string
 			isActive    bool
 		)
 
-		err := rows.Scan(&id, &name, &amountCents, &currency, &description, &isActive)
+		err := rows.Scan(&id, &name, &amount, &currency, &description, &isActive)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan fixed charge: %w", err)
 		}
 
-		money := shared.UnsafeFromCents(amountCents)
+		money := shared.UnsafeNewMoney(amount)
 		fc := fixed_charge.NewFixedCharge(id, name, money, description, isActive)
 		charges = append(charges, fc)
 	}

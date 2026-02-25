@@ -3,8 +3,8 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
-	"moka/internal/domain/budget"
-	"moka/internal/shared"
+	"github.com/aymaneelmaini/moka/internal/domain/budget"
+	"github.com/aymaneelmaini/moka/internal/shared"
 	"time"
 )
 
@@ -18,7 +18,7 @@ func NewBudgetRepository(db *DB) *BudgetRepository {
 
 func (r *BudgetRepository) Save(b budget.Budget) error {
 	query := `
-		INSERT INTO budgets (id, category_name, limit_cents, currency, month, year)
+		INSERT INTO budgets (id, category_name, limit_amount, currency, month, year)
 		VALUES (?, ?, ?, ?, ?, ?)
 	`
 
@@ -26,7 +26,7 @@ func (r *BudgetRepository) Save(b budget.Budget) error {
 		query,
 		b.ID(),
 		b.Category().Name(),
-		b.Limit().AmountInCents(),
+		b.Limit().Amount(),
 		b.Limit().Currency(),
 		int(b.Month()),
 		b.Year(),
@@ -41,7 +41,7 @@ func (r *BudgetRepository) Save(b budget.Budget) error {
 
 func (r *BudgetRepository) FindByID(id string) (budget.Budget, error) {
 	query := `
-		SELECT id, category_name, limit_cents, currency, month, year
+		SELECT id, category_name, limit_amount, currency, month, year
 		FROM budgets
 		WHERE id = ?
 	`
@@ -52,7 +52,7 @@ func (r *BudgetRepository) FindByID(id string) (budget.Budget, error) {
 
 func (r *BudgetRepository) FindByMonthAndYear(month time.Month, year int) ([]budget.Budget, error) {
 	query := `
-		SELECT id, category_name, limit_cents, currency, month, year
+		SELECT id, category_name, limit_amount, currency, month, year
 		FROM budgets
 		WHERE month = ? AND year = ?
 	`
@@ -68,7 +68,7 @@ func (r *BudgetRepository) FindByMonthAndYear(month time.Month, year int) ([]bud
 
 func (r *BudgetRepository) FindByCategoryAndMonth(categoryName string, month time.Month, year int) (budget.Budget, error) {
 	query := `
-		SELECT id, category_name, limit_cents, currency, month, year
+		SELECT id, category_name, limit_amount, currency, month, year
 		FROM budgets
 		WHERE category_name = ? AND month = ? AND year = ?
 	`
@@ -80,14 +80,14 @@ func (r *BudgetRepository) FindByCategoryAndMonth(categoryName string, month tim
 func (r *BudgetRepository) Update(b budget.Budget) error {
 	query := `
 		UPDATE budgets
-		SET category_name = ?, limit_cents = ?, currency = ?, month = ?, year = ?
+		SET category_name = ?, limit_amount = ?, currency = ?, month = ?, year = ?
 		WHERE id = ?
 	`
 
 	result, err := r.db.Exec(
 		query,
 		b.Category().Name(),
-		b.Limit().AmountInCents(),
+		b.Limit().Amount(),
 		b.Limit().Currency(),
 		int(b.Month()),
 		b.Year(),
@@ -134,13 +134,13 @@ func (r *BudgetRepository) scanBudget(row *sql.Row) (budget.Budget, error) {
 	var (
 		id           string
 		categoryName string
-		limitCents   int64
+		limitAmount  float64
 		currency     string
 		month        int
 		year         int
 	)
 
-	err := row.Scan(&id, &categoryName, &limitCents, &currency, &month, &year)
+	err := row.Scan(&id, &categoryName, &limitAmount, &currency, &month, &year)
 
 	if err == sql.ErrNoRows {
 		return budget.Budget{}, shared.ErrNotFound
@@ -150,7 +150,7 @@ func (r *BudgetRepository) scanBudget(row *sql.Row) (budget.Budget, error) {
 		return budget.Budget{}, fmt.Errorf("failed to scan budget: %w", err)
 	}
 
-	money := shared.UnsafeFromCents(limitCents)
+	money := shared.UnsafeNewMoney(limitAmount)
 	category, _ := shared.NewCategory(categoryName, shared.CategoryTypeExpense)
 
 	return budget.NewBudget(id, category, money, time.Month(month), year), nil
@@ -163,18 +163,18 @@ func (r *BudgetRepository) scanBudgets(rows *sql.Rows) ([]budget.Budget, error) 
 		var (
 			id           string
 			categoryName string
-			limitCents   int64
+			limitAmount  float64
 			currency     string
 			month        int
 			year         int
 		)
 
-		err := rows.Scan(&id, &categoryName, &limitCents, &currency, &month, &year)
+		err := rows.Scan(&id, &categoryName, &limitAmount, &currency, &month, &year)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan budget: %w", err)
 		}
 
-		money := shared.UnsafeFromCents(limitCents)
+		money := shared.UnsafeNewMoney(limitAmount)
 		category, _ := shared.NewCategory(categoryName, shared.CategoryTypeExpense)
 
 		b := budget.NewBudget(id, category, money, time.Month(month), year)

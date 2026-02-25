@@ -2,9 +2,9 @@ package application
 
 import (
 	"fmt"
-	"moka/internal/domain/budget"
-	"moka/internal/domain/transaction"
-	"moka/internal/shared"
+	"github.com/aymaneelmaini/moka/internal/domain/budget"
+	"github.com/aymaneelmaini/moka/internal/domain/transaction"
+	"github.com/aymaneelmaini/moka/internal/shared"
 	"time"
 
 	"github.com/google/uuid"

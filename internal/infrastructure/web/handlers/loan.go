@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"html/template"
-	"moka/internal/application"
+	"github.com/aymaneelmaini/moka/internal/application"
 	"net/http"
 	"strconv"
 	"time"
@@ -88,24 +88,17 @@ func (h *LoanHandler) PayLoan(w http.ResponseWriter, r *http.Request) {
 
 	loanID := r.FormValue("loan_id")
 
-	output, err := h.payLoanUC.Execute(application.PayLoanInput{
+	_, err = h.payLoanUC.Execute(application.PayLoanInput{
 		LoanID: loanID,
 		Amount: amount,
 		Date:   time.Now(),
 	})
 
 	if err != nil {
-		http.Error(w, "Failed to pay loan", http.StatusInternalServerError)
+		http.Error(w, "Failed to pay loan: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	data := map[string]interface{}{
-		"Success": true,
-		"Output":  output,
-	}
-
-	if err := h.templates.ExecuteTemplate(w, "pay_loan_success.html", data); err != nil {
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
-		return
-	}
+	w.Header().Set("HX-Redirect", "/")
+	w.WriteHeader(http.StatusOK)
 }
